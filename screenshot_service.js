@@ -177,18 +177,7 @@ async function setupExpressServer() {
       res.status(500).json({ error: 'Failed to load calendar data' });
     }
   });
-  
-  // Configuration endpoint for frontend
-  app.get('/api/config', (req, res) => {
-    res.json({
-      timezone: process.env.TIMEZONE || 'Europe/London',
-      weather: {
-        lat: parseFloat(process.env.WEATHER_LAT || '51.5074'),
-        lon: parseFloat(process.env.WEATHER_LON || '-0.1278'),
-        name: process.env.WEATHER_NAME || 'London, UK'
-      }
-    });
-  });
+
   
   // Health check endpoint
   app.get('/health', (req, res) => {

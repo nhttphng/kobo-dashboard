@@ -1,6 +1,6 @@
 # Kobo Dashboard
 
-An e-ink optimized dashboard that displays calendar events, weather forecast, and current date. For Kobo e-readers and KOReader (never tested in Kindle KOReader or other devices).
+An e-ink optimized dashboard that displays calendar events and current date. For Kobo e-readers and KOReader (never tested in Kindle KOReader or other devices).
 
 Built with Docker Compose for easy deployment with three coordinated services: Calendar Processor (fetches iCal events), Screenshot Service (captures dashboard), and Web Server (serves dashboard URL).
 
@@ -12,7 +12,6 @@ FYI: This plugin is still being tested, and requires improvements!
 
 This project generates a high-contrast PNG image showing:
 - 📅 **Today's calendar events** from multiple calendars using iCal/iCS URLS (from Google, Outlook, iCloud)
-- 🌤️ **Weather forecast** for your location
 - 📆 **Current month calendar** with today highlighted
 - 🕐 **Real-time updates** every few minutes (configurable)
 
@@ -118,8 +117,3 @@ Update `SCREENSHOT_WIDTH` and `SCREENSHOT_HEIGHT` in `.env` file for your device
 1. Check your iCal URLs are correct
 2. Make sure calendars are using correct private iCal links
 3. Check logs: `docker logs kobo-calendar-processor`
-
-### "Weather not updating"
-1. Verify your latitude/longitude coordinates
-2. Check network connectivity. The plugin could be out of service momentarily too.
-3. Check logs: `docker logs kobo-screenshot-service`
