@@ -73,7 +73,7 @@ This is just the screen refresh/reload. This drains battery! I really recommend 
 
 1. **Start the dashboard:**
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 The project runs on port `http://YOUR-SERVER-IP:3333/today.png`. This tutorial and plugin are not responsible for how you will setup ports on your machine, but ping me if you need any help and I can try to help. You can also find several tutorials online.
