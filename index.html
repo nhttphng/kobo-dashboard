@@ -105,10 +105,10 @@
           const calendarEvents = await loadGoogleCalendarApi();
           renderScheduleTimeline(calendarEvents);
         } catch (err) {
-          const timeline = document.querySelector(".schedule__timeline");
-          timeline.innerHTML =
-            '<div class="schedule__event">Failed to load calendar</div>';
-          console.error("Calendar load error:", err);
+          // const timeline = document.querySelector(".schedule__timeline");
+          // timeline.innerHTML =
+          //   '<div class="schedule__event">Failed to load calendar</div>';
+          // console.error("Calendar load error:", err);
         }
 
         /**
@@ -249,18 +249,20 @@
         padding: 8px 16px;
       }
 
+      .schedule__event-header {
+        display: flex;
+        gap: 24px;
+        justify-content: space-between;
+      }
+
       .schedule__event-time {
         font-weight: 700;
       }
 
       .schedule__event-source {
-        font-size: 24px;
+        font-size: 16px;
         color: #666;
-        margin-top: 10px;
         font-style: italic;
-        position: absolute;
-        right: 15px;
-        top: 0;
       }
 
       .schedule__day {
@@ -376,7 +378,7 @@
         <!-- Placeholder for calendar events -->
         <div class="schedule__timeline">
           <div class="schedule__event">
-            <div class="schedule__event-time">08:00 - 09:00</div>
+            <div class="schedule__event-header"><div class="schedule__event-time">08:00 - 09:00</div><div class="schedule__event-source">Appointments</div></div>
             <div class="schedule__event-title">Morning Meeting</div>
           </div>
         </div>
