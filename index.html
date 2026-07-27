@@ -171,6 +171,9 @@
             const eventDiv = document.createElement("div");
             eventDiv.className = "schedule__event";
 
+            const headerDiv = document.createElement("div");
+            headerDiv.className = "schedule__event-header";
+
             const timeDiv = document.createElement("div");
             timeDiv.className = "schedule__event-time";
             timeDiv.textContent = `${startStr} - ${endStr}`;
@@ -190,11 +193,12 @@
               sourceDiv.textContent = `📅 ${sourceName}`;
             }
 
-            eventDiv.appendChild(timeDiv);
-            eventDiv.appendChild(titleDiv);
+            headerDiv.appendChild(timeDiv);
             if (event.calendarSource) {
-              eventDiv.appendChild(sourceDiv);
+              headerDiv.appendChild(sourceDiv);
             }
+            eventDiv.appendChild(headerDiv);
+            eventDiv.appendChild(titleDiv);
             timeline.appendChild(eventDiv);
           });
         }
