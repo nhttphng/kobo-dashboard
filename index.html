@@ -199,33 +199,40 @@
         }
 
         todayEvents.forEach((event) => {
-          const start = event.start.dateTime || event.start.date;
-          const end = event.end.dateTime || event.end.date;
-          const startTime = new Date(start);
-          const endTime = new Date(end);
-          // Format as HH:MM in configured timezone
-          const startStr = startTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-            timeZone: "America/Regina",
-          });
-          const endStr = endTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-            timeZone: "America/Regina",
-          });
+          const timeDiv = document.createElement("div");
+          timeDiv.className = "schedule__event-time";
+
+          // 1. Identify if it is an all-day event
+          if (!event.start.dateTime && !!event.start.date) {
+            timeDiv.textContent = "All day";
+          } else {
+            // 2. Handle timed events safely
+            const startTime = new Date(event.start.dateTime);
+            const endTime = new Date(event.end.dateTime);
+
+            const startStr = startTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+              timeZone: "America/Regina",
+            });
+
+            const endStr = endTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+              timeZone: "America/Regina",
+            });
+
+            timeDiv.textContent = `${startStr} - ${endStr}`;
+          }
+
 
           const eventDiv = document.createElement("div");
           eventDiv.className = "schedule__event";
 
           const headerDiv = document.createElement("div");
           headerDiv.className = "schedule__event-header";
-
-          const timeDiv = document.createElement("div");
-          timeDiv.className = "schedule__event-time";
-          timeDiv.textContent = `${startStr} - ${endStr}`;
 
           const titleDiv = document.createElement("div");
           titleDiv.className = "schedule__event-title";
