@@ -28,6 +28,7 @@ def parse_ical_url(url, calendar_name, timezone_obj):
         
         # Get today in configured timezone
         today = datetime.now(timezone_obj).date()
+        tomorrow = today + timedelta(days=1);
         
         events = []
         
@@ -53,7 +54,7 @@ def parse_ical_url(url, calendar_name, timezone_obj):
                     event_date = event_datetime_tz.date()
                 
                 # Check if event is today
-                if event_date == today:
+                if event_date == today or event_date == tomorrow:
                     # Get event details
                     summary = str(event.get('summary', 'Untitled Event'))
                     
@@ -127,7 +128,7 @@ def main():
     for calendar in calendars:
         print(f"Processing {calendar['name']} calendar...", file=sys.stderr)
         events = parse_ical_url(calendar['url'], calendar['name'], timezone_obj)
-        print(f"Found {len(events)} events for today from {calendar['name']}", file=sys.stderr)
+        print(f"Found {len(events)} events for today/tomorrow from {calendar['name']}", file=sys.stderr)
         all_events.extend(events)
     
     # Sort events by start time
