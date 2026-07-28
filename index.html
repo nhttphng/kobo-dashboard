@@ -140,8 +140,6 @@
           const dateDiv = document.createElement("div");
           dateDiv.className = "date__date";
           dateDiv.textContent = date.toLocaleDateString(APP_CONFIG.localeString || "en-US", {
-            // year: "numeric",
-            // month: "long",
             day: "numeric",
             timeZone,
           });
@@ -245,56 +243,7 @@
 
         // Set up Calendar API response and rendering
         try {
-          // const calendarEvents = await loadGoogleCalendarApi();
-          const calendarEvents = [
-              {
-                "kind": "calendar#event",
-                "id": "7sm8pndp67b0m8abc123v666xo",
-                "status": "confirmed",
-                "summary": "Project Sync & Architecture Review",
-                "description": "Weekly alignment meeting to review system blueprints.",
-                "location": "Conference Room Delta",
-                "start": { 
-                  "dateTime": "2026-07-27T20:00:00-06:00", // Today (Evening)
-                  "timeZone": "America/Regina"
-                },
-                "end": { 
-                  "dateTime": "2026-07-27T21:00:00-06:00", 
-                  "timeZone": "America/Regina"
-                },
-                "eventType": "default"
-              },
-              {
-                "kind": "calendar#event",
-                "id": "release_block_01",
-                "status": "tentative",
-                "summary": "Production Code Freeze",
-                "description": "No manual deployment updates past this hour.",
-                "start": { 
-                  "dateTime": "2026-07-28T17:00:00-06:00", // Tomorrow
-                  "timeZone": "America/Regina"
-                },
-                "end": { 
-                  "dateTime": "2026-07-28T18:00:00-06:00", 
-                  "timeZone": "America/Regina"
-                },
-                "eventType": "default"
-              },
-              {
-                "kind": "calendar#event",
-                "id": "vacation2026xyz",
-                "status": "confirmed",
-                "summary": "Alex Out of Office - Summer Vacation",
-                "start": { 
-                  "date": "2026-07-28" // Tomorrow (All-Day Event format)
-                },
-                "end": { 
-                  "date": "2026-07-29" // Exclusive end date (Ends at start of next day)
-                },
-                "transparency": "transparent",
-                "eventType": "default"
-              }
-            ]
+          const calendarEvents = await loadGoogleCalendarApi();
           renderSchedule(calendarEvents);
         } catch (err) {
           // const timeline = document.querySelector(".schedule__timeline");
