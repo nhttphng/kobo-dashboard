@@ -79,6 +79,7 @@ class CalendarProcessor:
             
             # Get today in configured timezone
             today = datetime.now(self.timezone).date()
+            tomorrow = today + timedelta(days=1)
             logger.info(f"Processing events for date: {today} ({calendar_name})")
             
             events = []
@@ -88,11 +89,11 @@ class CalendarProcessor:
             for component in cal.walk():
                 if component.name == "VEVENT":
                     total_components += 1
-                    event = self._process_event(component, today, calendar_name)
+                    event = self._process_event(component, today, calendar_name) or self._process_event(component, tomorrow, calendar_name)
                     if event:
                         events.append(event)
             
-            logger.info(f"Processed {total_components} total events, found {len(events)} for today ({calendar_name})")
+            logger.info(f"Processed {total_components} total events, found {len(events)} for today and tomorrow ({calendar_name})")
             
             # Log each found event
             for event in events:
