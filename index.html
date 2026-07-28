@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -12,17 +12,17 @@
        */
       async function loadAppConfig() {
         try {
-          const response = await fetch('/api/config');
+          const response = await fetch("/api/config");
           if (response.ok) {
             APP_CONFIG = await response.json();
             // Set CSS variables for responsive dimensions
             if (APP_CONFIG.screenshotWidth && APP_CONFIG.screenshotHeight) {
-              document.documentElement.style.setProperty('--dashboard-width', APP_CONFIG.screenshotWidth + 'px');
-              document.documentElement.style.setProperty('--dashboard-height', APP_CONFIG.screenshotHeight + 'px');
+              document.documentElement.style.setProperty("--dashboard-width", APP_CONFIG.screenshotWidth + "px");
+              document.documentElement.style.setProperty("--dashboard-height", APP_CONFIG.screenshotHeight + "px");
             }
           }
         } catch (error) {
-          console.log('Using default timezone configuration');
+          console.log("Using default timezone configuration");
         }
       }
 
@@ -31,22 +31,40 @@
        * @returns {{year: number, month: number, monthName: string, daysInMonth: number, firstDayOfWeek: number}}
        */
       function getCurrentDateInfo() {
-        // Always use the configured timezone for calendar logic
-        const now = new Date(new Date().toLocaleString(APP_CONFIG.localeString, { timeZone: 'America/Regina' }));
+        const now = new Date();
+        const timeZone = "America/Regina";
+
+        const formatter = new Intl.DateTimeFormat("en-US", {
+          timeZone,
+          year: "numeric",
+          month: "numeric", // 1-12
+          day: "numeric",
+        });
+
+        const parts = formatter.formatToParts(now);
+        const year = parseInt(parts.find((p) => p.type === "year").value, 10);
+        const month = parseInt(parts.find((p) => p.type === "month").value, 10) - 1; // Convert to 0-indexed
+        const day = parseInt(parts.find((p) => p.type === "day").value, 10);
+
+        // We use UTC methods here to prevent the Docker host timezone from shifting the day
+        const firstDayUtc = new Date(Date.UTC(year, month, 1));
+        const firstDayOfWeek = firstDayUtc.getUTCDay(); // 0=Sun, 1=Mon, etc.
+
+        // Safely calculate total days in that specific month
+        const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+
+        // Get the localized month name
+        const monthName = new Date(Date.UTC(year, month, 1)).toLocaleString(APP_CONFIG.localeString || "en-GB", {
+          month: "long",
+          timeZone,
+        });
+
         return {
-          year: now.getFullYear(),
-          month: now.getMonth(), // 0-indexed
-          monthName: now.toLocaleString("default", { month: "long" }),
-          daysInMonth: new Date(
-            now.getFullYear(),
-            now.getMonth() + 1,
-            0
-          ).getDate(),
-          firstDayOfWeek: new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            1
-          ).getDay(), // 0=Sun
+          year,
+          month, // 0-indexed (Jan = 0)
+          monthName,
+          daysInMonth,
+          firstDayOfWeek,
         };
       }
 
@@ -72,12 +90,10 @@
             } else if (day <= info.daysInMonth) {
               td.textContent = day;
               // Highlight today
-              const now = new Date(new Date().toLocaleString(APP_CONFIG.localeString, { timeZone: APP_CONFIG.timezone }));
-              if (
-                day === now.getDate() &&
-                info.month === now.getMonth() &&
-                info.year === now.getFullYear()
-              ) {
+              const now = new Date(
+                new Date().toLocaleString(APP_CONFIG.localeString, { timeZone: APP_CONFIG.timezone }),
+              );
+              if (day === now.getDate() && info.month === now.getMonth() && info.year === now.getFullYear()) {
                 td.classList.add("calendar__date--today");
               }
               day++;
@@ -97,7 +113,7 @@
       async function initDashboard() {
         // Load configuration first
         await loadAppConfig();
-        
+
         renderCalendar();
 
         // Set up Calendar API response and rendering
@@ -155,17 +171,17 @@
             const startTime = new Date(start);
             const endTime = new Date(end);
             // Format as HH:MM in configured timezone
-            const startStr = startTime.toLocaleTimeString(APP_CONFIG.localeString || 'en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
+            const startStr = startTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
               hour12: false,
-              timeZone: 'America/Regina'
+              timeZone: "America/Regina",
             });
-            const endStr = endTime.toLocaleTimeString(APP_CONFIG.localeString || 'en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
+            const endStr = endTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
               hour12: false,
-              timeZone: 'America/Regina'
+              timeZone: "America/Regina",
             });
 
             const eventDiv = document.createElement("div");
@@ -187,8 +203,8 @@
             sourceDiv.className = "schedule__event-source";
             if (event.calendarSource) {
               // Show a simplified version of the calendar ID
-              const sourceName = event.calendarSource.includes('@') 
-                ? event.calendarSource.split('@')[0] 
+              const sourceName = event.calendarSource.includes("@")
+                ? event.calendarSource.split("@")[0]
                 : event.calendarSource;
               sourceDiv.textContent = `📅 ${sourceName}`;
             }
@@ -324,7 +340,7 @@
       }
 
       .calendar__date--today {
-        background: #E0E0E0;
+        background: #e0e0e0;
         font-weight: bold;
       }
 
@@ -382,7 +398,10 @@
         <!-- Placeholder for calendar events -->
         <div class="schedule__timeline">
           <div class="schedule__event">
-            <div class="schedule__event-header"><div class="schedule__event-time">08:00 - 09:00</div><div class="schedule__event-source">Appointments</div></div>
+            <div class="schedule__event-header">
+              <div class="schedule__event-time">08:00 - 09:00</div>
+              <div class="schedule__event-source">Appointments</div>
+            </div>
             <div class="schedule__event-title">Morning Meeting</div>
           </div>
         </div>
