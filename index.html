@@ -206,9 +206,9 @@
           const end = event.end.dateTime;
 
           // 1. Identify if it is an all-day event
-          if (event.isAllDay) {
-            timeDiv.textContent = "All day";
-          } else {
+          // if (event.isAllDay) {
+          //   timeDiv.textContent = "All day";
+          // } else {
             // 2. Handle timed events safely
             const startTime = new Date(start);
             const endTime = new Date(eend);
@@ -227,8 +227,8 @@
               timeZone: "America/Regina",
             });
 
-            timeDiv.textContent = `${startStr} - ${endStr}`;
-          }
+            timeDiv.textContent = `${startStr} - ${endStr} ${event.isAllDay}`;
+          // }
 
           const eventDiv = document.createElement("div");
           eventDiv.className = "schedule__event";
