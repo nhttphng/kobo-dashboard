@@ -32,19 +32,24 @@
        */
       function getCurrentDateInfo() {
         const now = new Date();
-        const timeZone = "America/Regina";
+        const timeZone = APP_CONFIG.timezone || "America/Regina";
 
         const formatter = new Intl.DateTimeFormat("en-US", {
           timeZone,
+          hour12: false,
           year: "numeric",
           month: "numeric", // 1-12
           day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         });
 
         const parts = formatter.formatToParts(now);
         const year = parseInt(parts.find((p) => p.type === "year").value, 10);
         const month = parseInt(parts.find((p) => p.type === "month").value, 10) - 1; // Convert to 0-indexed
         const day = parseInt(parts.find((p) => p.type === "day").value, 10);
+        const hour = parseInt(parts.find((p) => p.type === "hour").value, 10);
+        const minute = parseInt(parts.find((p) => p.type === "minute").value, 10);
 
         // We use UTC methods here to prevent the Docker host timezone from shifting the day
         const firstDayUtc = new Date(Date.UTC(year, month, 1));
@@ -65,6 +70,8 @@
           monthName,
           daysInMonth,
           firstDayOfWeek,
+          hour,
+          minute,
         };
       }
 
@@ -107,6 +114,126 @@
         weeks.forEach((tr) => tbody.appendChild(tr));
       }
 
+      function renderSchedule(calendarEvents) {
+        const schedule = document.querySelector(".schedule");
+
+        // Clear any previous events
+        schedule.innerHTML = "";
+
+        const now = new Date();
+        let tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dates = [now, tomorrow];
+        const timeZone = APP_CONFIG.timezone || "America/Regina";
+
+        dates.forEach(function(date) {
+          const dayDiv = document.createElement("div");
+          dayDiv.className = "schedule__day";
+
+          const weekdayDiv = document.createElement("div");
+          weekdayDiv.className = "date__weekday";
+          weekdayDiv.textContent = date.toLocaleDateString(APP_CONFIG.localeString || "en-US", {
+            weekday: "long",
+            timeZone,
+          });
+
+          const dateDiv = document.createElement("div");
+          dateDiv.className = "date__date";
+          dateDiv.textContent = date.toLocaleDateString(APP_CONFIG.localeString || "en-US", {
+            // year: "numeric",
+            // month: "long",
+            day: "numeric",
+            timeZone,
+          });
+
+          const dayHeaderDiv = document.createElement("div");
+          dayHeaderDiv.className = "schedule__date";
+          dayHeaderDiv.appendChild(weekdayDiv);
+          dayHeaderDiv.appendChild(dateDiv);
+
+          const timelineDiv = document.createElement("div");
+          timelineDiv.className = "schedule__timeline";
+
+          dayDiv.appendChild(dayHeaderDiv);
+          dayDiv.appendChild(timelineDiv);
+          schedule.appendChild(dayDiv);
+
+          renderScheduleEvents(calendarEvents, date, timelineDiv);
+        });
+      }
+
+      function renderScheduleEvents(events, date, timeline) {
+        console.log(events);
+        // Filter events that equal date
+        const todayEvents = events.filter((event) => {
+          const start = event.start.dateTime || event.start.date; // all-day vs timed
+          const eventDate = new Date(start);
+          return eventDate.toDateString() === date.toDateString();
+        });
+        console.log(todayEvents);
+
+        if (todayEvents.length === 0) {
+          const emptyDiv = document.createElement("div");
+          emptyDiv.className = "schedule__event";
+          emptyDiv.textContent = "No events today";
+          timeline.appendChild(emptyDiv);
+          return;
+        }
+
+        todayEvents.forEach((event) => {
+          const start = event.start.dateTime || event.start.date;
+          const end = event.end.dateTime || event.end.date;
+          const startTime = new Date(start);
+          const endTime = new Date(end);
+          // Format as HH:MM in configured timezone
+          const startStr = startTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+            timeZone: "America/Regina",
+          });
+          const endStr = endTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+            timeZone: "America/Regina",
+          });
+
+          const eventDiv = document.createElement("div");
+          eventDiv.className = "schedule__event";
+
+          const headerDiv = document.createElement("div");
+          headerDiv.className = "schedule__event-header";
+
+          const timeDiv = document.createElement("div");
+          timeDiv.className = "schedule__event-time";
+          timeDiv.textContent = `${startStr} - ${endStr}`;
+
+          const titleDiv = document.createElement("div");
+          titleDiv.className = "schedule__event-title";
+          titleDiv.textContent = event.summary || "Untitled event";
+
+          // Add calendar source indicator
+          const sourceDiv = document.createElement("div");
+          sourceDiv.className = "schedule__event-source";
+          if (event.calendarSource) {
+            // Show a simplified version of the calendar ID
+            const sourceName = event.calendarSource.includes("@")
+              ? event.calendarSource.split("@")[0]
+              : event.calendarSource;
+            sourceDiv.textContent = `📅 ${sourceName}`;
+          }
+
+          headerDiv.appendChild(timeDiv);
+          if (event.calendarSource) {
+            headerDiv.appendChild(sourceDiv);
+          }
+          eventDiv.appendChild(headerDiv);
+          eventDiv.appendChild(titleDiv);
+          timeline.appendChild(eventDiv);
+        });
+      }
+
       /**
        * Initialize dashboard: calendar.
        */
@@ -118,8 +245,57 @@
 
         // Set up Calendar API response and rendering
         try {
-          const calendarEvents = await loadGoogleCalendarApi();
-          renderScheduleTimeline(calendarEvents);
+          // const calendarEvents = await loadGoogleCalendarApi();
+          const calendarEvents = [
+              {
+                "kind": "calendar#event",
+                "id": "7sm8pndp67b0m8abc123v666xo",
+                "status": "confirmed",
+                "summary": "Project Sync & Architecture Review",
+                "description": "Weekly alignment meeting to review system blueprints.",
+                "location": "Conference Room Delta",
+                "start": { 
+                  "dateTime": "2026-07-27T20:00:00-06:00", // Today (Evening)
+                  "timeZone": "America/Regina"
+                },
+                "end": { 
+                  "dateTime": "2026-07-27T21:00:00-06:00", 
+                  "timeZone": "America/Regina"
+                },
+                "eventType": "default"
+              },
+              {
+                "kind": "calendar#event",
+                "id": "release_block_01",
+                "status": "tentative",
+                "summary": "Production Code Freeze",
+                "description": "No manual deployment updates past this hour.",
+                "start": { 
+                  "dateTime": "2026-07-28T17:00:00-06:00", // Tomorrow
+                  "timeZone": "America/Regina"
+                },
+                "end": { 
+                  "dateTime": "2026-07-28T18:00:00-06:00", 
+                  "timeZone": "America/Regina"
+                },
+                "eventType": "default"
+              },
+              {
+                "kind": "calendar#event",
+                "id": "vacation2026xyz",
+                "status": "confirmed",
+                "summary": "Alex Out of Office - Summer Vacation",
+                "start": { 
+                  "date": "2026-07-28" // Tomorrow (All-Day Event format)
+                },
+                "end": { 
+                  "date": "2026-07-29" // Exclusive end date (Ends at start of next day)
+                },
+                "transparency": "transparent",
+                "eventType": "default"
+              }
+            ]
+          renderSchedule(calendarEvents);
         } catch (err) {
           // const timeline = document.querySelector(".schedule__timeline");
           // timeline.innerHTML =
@@ -134,89 +310,6 @@
           const response = await fetch("/api/calendar");
           if (!response.ok) throw new Error("Failed to load calendar data");
           return await response.json();
-        }
-
-        function renderScheduleTimeline(events) {
-          const timeline = document.querySelector(".schedule__timeline");
-          const dateDiv = document.querySelector(".schedule__date");
-          const weekdayDiv = document.querySelector(".schedule__weekday");
-
-          // Clear any previous events
-          timeline.innerHTML = "";
-
-          const now = new Date();
-          dateDiv.textContent = now.getDate();
-          weekdayDiv.textContent = now.toLocaleString("default", {
-            weekday: "long",
-          });
-
-          // Filter events that are today
-          const todayEvents = events.filter((event) => {
-            const start = event.start.dateTime || event.start.date; // all-day vs timed
-            const eventDate = new Date(start);
-            return eventDate.toDateString() === now.toDateString();
-          });
-
-          if (todayEvents.length === 0) {
-            const emptyDiv = document.createElement("div");
-            emptyDiv.className = "schedule__event";
-            emptyDiv.textContent = "No meetings today";
-            timeline.appendChild(emptyDiv);
-            return;
-          }
-
-          todayEvents.forEach((event) => {
-            const start = event.start.dateTime || event.start.date;
-            const end = event.end.dateTime || event.end.date;
-            const startTime = new Date(start);
-            const endTime = new Date(end);
-            // Format as HH:MM in configured timezone
-            const startStr = startTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-              timeZone: "America/Regina",
-            });
-            const endStr = endTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-              timeZone: "America/Regina",
-            });
-
-            const eventDiv = document.createElement("div");
-            eventDiv.className = "schedule__event";
-
-            const headerDiv = document.createElement("div");
-            headerDiv.className = "schedule__event-header";
-
-            const timeDiv = document.createElement("div");
-            timeDiv.className = "schedule__event-time";
-            timeDiv.textContent = `${startStr} - ${endStr}`;
-
-            const titleDiv = document.createElement("div");
-            titleDiv.className = "schedule__event-title";
-            titleDiv.textContent = event.summary || "Untitled event";
-
-            // Add calendar source indicator
-            const sourceDiv = document.createElement("div");
-            sourceDiv.className = "schedule__event-source";
-            if (event.calendarSource) {
-              // Show a simplified version of the calendar ID
-              const sourceName = event.calendarSource.includes("@")
-                ? event.calendarSource.split("@")[0]
-                : event.calendarSource;
-              sourceDiv.textContent = `📅 ${sourceName}`;
-            }
-
-            headerDiv.appendChild(timeDiv);
-            if (event.calendarSource) {
-              headerDiv.appendChild(sourceDiv);
-            }
-            eventDiv.appendChild(headerDiv);
-            eventDiv.appendChild(titleDiv);
-            timeline.appendChild(eventDiv);
-          });
         }
       }
 
@@ -273,6 +366,7 @@
         display: flex;
         gap: 24px;
         justify-content: space-between;
+        margin-bottom: 4px;
       }
 
       .schedule__event-time {
@@ -286,16 +380,19 @@
       }
 
       .schedule__day {
-        align-items: center;
         display: flex;
+        flex-direction: column;
         gap: 12px;
         height: 100%;
         margin: 16px 0;
       }
 
       .schedule__date {
+        display: flex;
+        justify-content: space-between;
         font-weight: bold;
         line-height: 1;
+        text-transform: uppercase;
       }
 
       .schedule__weekday {
@@ -313,6 +410,7 @@
 
       .calendar-container {
         border-bottom: 1px solid black;
+        margin-bottom: 16px;
       }
 
       .calendar {
@@ -337,6 +435,7 @@
 
       .calendar__date {
         padding: 8px;
+        text-align: center;
       }
 
       .calendar__date--today {
@@ -391,21 +490,42 @@
       <div class="schedule">
         <!-- Placeholder for Date -->
         <div class="schedule__day">
-          <div class="schedule__date">25</div>
-          <div class="schedule__weekday">Tuesday</div>
+          <div class="schedule__date">
+            <div class="date__weekday">Tuesday</div>
+            <div class="date__date">July 28, 2026</div>
+          </div>
+
+          <!-- Placeholder for calendar events -->
+          <div class="schedule__timeline">
+            <div class="schedule__event">
+              <div class="schedule__event-header">
+                <div class="schedule__event-time">08:00 - 09:00</div>
+                <div class="schedule__event-source">Appointments</div>
+              </div>
+              <div class="schedule__event-title">Morning Meeting</div>
+            </div>
+          </div>
         </div>
 
-        <!-- Placeholder for calendar events -->
-        <div class="schedule__timeline">
-          <div class="schedule__event">
-            <div class="schedule__event-header">
-              <div class="schedule__event-time">08:00 - 09:00</div>
-              <div class="schedule__event-source">Appointments</div>
+        <div class="schedule__day">
+          <div class="schedule__date">
+            <div class="date__weekday">Tuesday</div>
+            <div class="date__date">July 28, 2026</div>
+          </div>
+
+          <!-- Placeholder for calendar events -->
+          <div class="schedule__timeline">
+            <div class="schedule__event">
+              <div class="schedule__event-header">
+                <div class="schedule__event-time">08:00 - 09:00</div>
+                <div class="schedule__event-source">Main</div>
+              </div>
+              <div class="schedule__event-title">Morning Meeting</div>
             </div>
-            <div class="schedule__event-title">Morning Meeting</div>
           </div>
         </div>
       </div>
     </div>
   </body>
 </html>
+
