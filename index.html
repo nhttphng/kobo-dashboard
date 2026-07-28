@@ -206,7 +206,7 @@
           const end = event.end.dateTime;
 
           // 1. Identify if it is an all-day event
-          if (!start.includes('T') && !end.includes('T')) {
+          if (event.isAllDay) {
             timeDiv.textContent = "All day";
           } else {
             // 2. Handle timed events safely
