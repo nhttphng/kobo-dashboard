@@ -32,7 +32,7 @@
        */
       function getCurrentDateInfo() {
         // Always use the configured timezone for calendar logic
-        const now = new Date(new Date().toLocaleString(APP_CONFIG.localeString, { timeZone: APP_CONFIG.timezone }));
+        const now = new Date(new Date().toLocaleString(APP_CONFIG.localeString, { timeZone: 'America/Regina' }));
         return {
           year: now.getFullYear(),
           month: now.getMonth(), // 0-indexed
