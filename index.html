@@ -70,6 +70,7 @@
           monthName,
           daysInMonth,
           firstDayOfWeek,
+          day,
           hour,
           minute,
         };
@@ -97,10 +98,7 @@
             } else if (day <= info.daysInMonth) {
               td.textContent = day;
               // Highlight today
-              const now = new Date(
-                new Date().toLocaleString(APP_CONFIG.localeString, { timeZone: APP_CONFIG.timezone }),
-              );
-              if (day === now.getDate() && info.month === now.getMonth() && info.year === now.getFullYear()) {
+              if (day === info.day ) {
                 td.classList.add("calendar__date--today");
               }
               day++;
