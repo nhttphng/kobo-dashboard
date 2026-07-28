@@ -202,13 +202,16 @@
           const timeDiv = document.createElement("div");
           timeDiv.className = "schedule__event-time";
 
+          const start = event.start.dateTime;
+          const end = event.end.dateTime;
+
           // 1. Identify if it is an all-day event
-          if (!event.start.dateTime && !!event.start.date) {
+          if (!start.includes('T') && !end.includes('T')) {
             timeDiv.textContent = "All day";
           } else {
             // 2. Handle timed events safely
-            const startTime = new Date(event.start.dateTime);
-            const endTime = new Date(event.end.dateTime);
+            const startTime = new Date(start);
+            const endTime = new Date(eend);
 
             const startStr = startTime.toLocaleTimeString(APP_CONFIG.localeString || "en-GB", {
               hour: "2-digit",
@@ -226,7 +229,6 @@
 
             timeDiv.textContent = `${startStr} - ${endStr}`;
           }
-
 
           const eventDiv = document.createElement("div");
           eventDiv.className = "schedule__event";
@@ -246,7 +248,7 @@
             const sourceName = event.calendarSource.includes("@")
               ? event.calendarSource.split("@")[0]
               : event.calendarSource;
-            sourceDiv.textContent = `📅 ${sourceName}`;
+            sourceDiv.textContent = sourceName;
           }
 
           headerDiv.appendChild(timeDiv);
@@ -351,7 +353,6 @@
 
       .schedule__event-source {
         font-size: 16px;
-        color: #666;
         font-style: italic;
       }
 
