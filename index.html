@@ -154,19 +154,41 @@
           dayDiv.appendChild(timelineDiv);
           schedule.appendChild(dayDiv);
 
-          renderScheduleEvents(calendarEvents, date, timelineDiv);
+          renderScheduleEvents(calendarEvents, date, timelineDiv, timeZone);
         });
       }
 
-      function renderScheduleEvents(events, date, timeline) {
-        console.log(events);
+      function renderScheduleEvents(events, date, timeline, timeZone) {
         // Filter events that equal date
         const todayEvents = events.filter((event) => {
-          const start = event.start.dateTime || event.start.date; // all-day vs timed
-          const eventDate = new Date(start);
-          return eventDate.toDateString() === date.toDateString();
+          // 1. Core target comparison date formatted to YYYY-MM-DD
+          const targetDateString = new Intl.DateTimeFormat("en-CA", {
+            timeZone,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(date); // Output format: YYYY-MM-DD
+
+          // 2. Handle All-Day Events
+          if (event.start.date) {
+            return event.start.date === targetDateString;
+          }
+
+          // 3. Handle Timed Events (Locks the timestamp conversion to the target time zone)
+          if (event.start.dateTime) {
+            const eventDate = new Date(event.start.dateTime);
+            const formattedEventDate = new Intl.DateTimeFormat("en-CA", {
+              timeZone,
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }).format(eventDate);
+
+            return formattedEventDate === targetDateString;
+          }
+
+          return false;
         });
-        console.log(todayEvents);
 
         if (todayEvents.length === 0) {
           const emptyDiv = document.createElement("div");
