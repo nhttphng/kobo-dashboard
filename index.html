@@ -162,7 +162,7 @@
         // Filter events that equal date
         const todayEvents = events.filter((event) => {
           // 1. Core target comparison date formatted to YYYY-MM-DD
-          const targetDateString = new Intl.DateTimeFormat("en-CA", {
+          const targetDateString = new Intl.DateTimeFormat(APP_CONFIG.localeString || "en-US", {
             timeZone,
             year: "numeric",
             month: "2-digit",
@@ -177,7 +177,7 @@
           // 3. Handle Timed Events (Locks the timestamp conversion to the target time zone)
           if (event.start.dateTime) {
             const eventDate = new Date(event.start.dateTime);
-            const formattedEventDate = new Intl.DateTimeFormat("en-CA", {
+            const formattedEventDate = new Intl.DateTimeFormat(APP_CONFIG.localeString || "en-US", {
               timeZone,
               year: "numeric",
               month: "2-digit",
