@@ -150,7 +150,7 @@ class CalendarProcessor:
                 'description': str(event_component.get('description', '')),
                 'location': str(event_component.get('location', '')),
                 'calendarSource': calendar_name,
-                "isAllDay": not isinstance(dtstart.dt, datetime)
+                "isAllDay": not hasattr(dtstart.dt, 'hour')
             }
             
         except Exception as e:
