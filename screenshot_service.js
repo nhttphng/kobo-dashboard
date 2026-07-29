@@ -37,23 +37,38 @@ class ScreenshotService {
   }
 
   async initialize() {
-    log('Initializing Screenshot Service...');
-    
-    // Launch browser
+    log("Initializing Screenshot Service...");
+    await this._launchBrowser();
+    log("Browser initialized");
+  }
+
+  async _launchBrowser() {
     this.browser = await puppeteer.launch({
       headless: true,
       args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu'
-      ]
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--disable-gpu",
+      ],
     });
-    
-    log('Browser initialized');
+
+    this.browser.on("disconnected", () => {
+      log("Browser disconnected unexpectedly");
+      this.browser = null;
+    });
+  }
+
+  async _ensureBrowser() {
+    if (this.browser && this.browser.isConnected()) {
+      return this.browser;
+    }
+    log("Browser not connected, relaunching...");
+    await this._launchBrowser();
+    return this.browser;
   }
 
   async checkCalendarFile() {
@@ -62,17 +77,17 @@ class ScreenshotService {
      */
     try {
       if (!fs.existsSync(CALENDAR_JSON)) {
-        log('Warning: calendar.json not found. Make sure calendar_processor.py is running.');
+        log("Warning: calendar.json not found. Make sure calendar_processor.py is running.");
         return false;
       }
-      
+
       const stats = fs.statSync(CALENDAR_JSON);
       const ageMinutes = (Date.now() - stats.mtime.getTime()) / (1000 * 60);
-      
+
       if (ageMinutes > 10) {
         log(`Warning: calendar.json is ${ageMinutes.toFixed(1)} minutes old. Calendar processor might not be running.`);
       }
-      
+
       return true;
     } catch (error) {
       log(`Error checking calendar file: ${error.message}`);
@@ -82,54 +97,54 @@ class ScreenshotService {
 
   async generateScreenshot() {
     if (this.isGenerating) {
-      log('Screenshot generation already in progress, skipping...');
+      log("Screenshot generation already in progress, skipping...");
       return;
     }
 
     this.isGenerating = true;
-    
+    let page = null;
+
     try {
-      log('Starting screenshot generation...');
-      
-      // Check if calendar data is available
-      if (!await this.checkCalendarFile()) {
-        // Create empty calendar.json if it doesn't exist
+      log("Starting screenshot generation...");
+
+      if (!(await this.checkCalendarFile())) {
         const emptyEvents = [];
         fs.writeFileSync(CALENDAR_JSON, JSON.stringify(emptyEvents, null, 2));
-        log('Created empty calendar.json file');
+        log("Created empty calendar.json file");
       }
-      
-      const page = await this.browser.newPage();
-      
-      // Set viewport
-      await page.setViewport({ 
-        width: SCREENSHOT_WIDTH, 
-        height: SCREENSHOT_HEIGHT, 
-        deviceScaleFactor: 1 
+
+      const browser = await this._ensureBrowser();
+      page = await browser.newPage();
+
+      await page.setViewport({
+        width: SCREENSHOT_WIDTH,
+        height: SCREENSHOT_HEIGHT,
+        deviceScaleFactor: 1,
       });
-      
-      // Navigate to the dashboard
-      await page.goto(`http://localhost:${PORT}`, { 
-        waitUntil: 'networkidle0',
-        timeout: 30000 
+
+      await page.goto(`http://localhost:${PORT}`, {
+        waitUntil: "networkidle0",
+        timeout: 30000,
       });
-      
-      // Wait a bit for any dynamic content to load
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Take screenshot
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       await page.screenshot({
-        path: path.join(__dirname, 'today.png'),
-        fullPage: false
+        path: path.join(__dirname, "today.png"),
+        fullPage: false,
       });
-      
-      await page.close();
-      
-      log('Screenshot saved to today.png');
-      
+
+      log("Screenshot saved to today.png");
     } catch (error) {
       log(`Error generating screenshot: ${error.message}`);
     } finally {
+      if (page) {
+        try {
+          await page.close();
+        } catch (closeErr) {
+          // page/browser may already be gone; nothing more to do
+        }
+      }
       this.isGenerating = false;
     }
   }
@@ -137,20 +152,20 @@ class ScreenshotService {
   async startScheduledScreenshots() {
     // Generate initial screenshot
     await this.generateScreenshot();
-    
+
     // Schedule regular screenshots
     const intervalMs = SCREENSHOT_INTERVAL_MINUTES * 60 * 1000;
     setInterval(async () => {
       await this.generateScreenshot();
     }, intervalMs);
-    
+
     log(`Screenshot generation scheduled every ${SCREENSHOT_INTERVAL_MINUTES} minutes`);
   }
 
   async cleanup() {
     if (this.browser) {
       await this.browser.close();
-      log('Browser closed');
+      log("Browser closed");
     }
   }
 }
